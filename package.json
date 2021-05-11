@@ -1,0 +1,19 @@
+{
+  "name": "express-assignment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Victor Villegas",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}

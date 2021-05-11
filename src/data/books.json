@@ -1,0 +1,52 @@
+[
+  {
+    "title": "Prince Caspian : The Return to Narnia",
+    "author": "C.S. Lewis",
+    "year": 2005,
+    "tag": [
+      "fantasy",
+      "classics",
+      "fiction",
+      "children",
+      "adventure"
+    ],
+    "guid": "524ab3ef-4be6-4cd0-adaf-b5bb3ede03a7"
+  },
+  {
+    "title": "The Lion, the Witch and the Wardrobe",
+    "author": "C.S. Lewis",
+    "year": 2005,
+    "tag": [
+      "fantasy",
+      "classics",
+      "fiction",
+      "children",
+      "adventure"
+    ],
+    "guid": "faa072db-8dad-4aaf-b7a3-a71a1fd7ff11"
+  },
+  {
+    "title": "The ​Crown of Gilded Bones",
+    "author": "Jennifer L. Armentrout",
+    "year": 2021,
+    "tag": [
+      "fantasy",
+      "paranormal",
+      "romance",
+      "fiction"
+    ],
+    "guid": "43d25f73-14db-469e-949c-a56983fcdd58"
+  },
+  {
+    "title": "The Ballad of Songbirds and Snakes",
+    "author": "Suzanne Collins",
+    "year": 2020,
+    "tag": [
+      "fiction",
+      "fantasy",
+      "science fiction",
+      "adventure"
+    ],
+    "guid": "9e764933-30e6-4c99-b392-745e8eb7f6bd"
+  }
+]
