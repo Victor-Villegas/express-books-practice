@@ -1,87 +1,124 @@
-const bookValidator = require('../lib/bookValidator');
+const { validationResult } = require('express-validator');
 
 // Models
 const { Book } = require('../models');
 
-const getBook = (req, res) => {
-  const { query } = req;
+module.exports = {
+  getBooks: (req, res) => {
+    const { query } = req;
 
-  // Get book by GUID
-  if (query.guid) {
-    const guid = query.guid;
+    Book.getBooks(query, (books) => {
+      if (!books) {
+        return res.status(204).send({
+          statusCode: 204,
+          message: 'No Content',
+          errorDetails: [
+            'There is no content in the Books database'
+          ]
+        });
+      }
+
+      return res.status(200).send(books);
+    });
+  },
+
+  getBook: (req, res) => {
+    const { guid } = req.params;
 
     Book.getByGUID(guid, (book) => {
-      if (book) {
-        return res.status(200).send(book);
+      if (!book) {
+        return res.status(404).send({
+          statusCode: 404,
+          message: 'Not found',
+          errorDetails: []
+        });
       }
 
-      return res.status(404).send({
-        message: 'Book not found.'
-      });
+      return res.status(200).send(book);
     });
+  },
 
-  // Get books by Tags
-  } else {
-    Book.getByTags(query, (books) => {
-      if (books) {
-        return res.status(200).send(books);
-      }
+  updateBook: (req, res) => {
+    const errors = validationResult(req);
 
-      return res.status(404).send({
-        message: 'No books found.'
-      });
-    });
-  }
-};
-
-const createBook = (req, res) => {
-  const { body } = req;
-
-  // Data validation
-  const validation = bookValidator(body);
-  if (validation) {
-    return res.status(validation.status).send({
-      message: validation.message
-    });
-  }
-
-  // Check if book is already listed
-  Book.checkBook(body, (books) => {
-    if (books) {
-      return res.status(400).send({
-        message: 'Book already in database.'
+    if (!errors.isEmpty()) {
+      return res.status(422).send({
+        statusCode: 422,
+        message: 'Syntax error',
+        errorDetails: errors.array()
       });
     }
 
-    const newBook = new Book(body);
-    newBook.save();
+    const { body } = req;
+    const { guid } = req.params;
 
-    return res.status(201).send({
-      message: 'Book successfully created.',
-      guid: newBook.getGUID()
-    });
-  });
-};
+    Book.updateBook(guid, body, (book) => {
+      if (!book) {
+        return res.status(404).send({
+          statusCode: 404,
+          message: 'Not found',
+          errorDetails: []
+        });
+      }
 
-const deleteBook = (req, res) => {
-  const { query } = req;
-
-  Book.removeByGUID(query.guid, (books) => {
-    if (books) {
       return res.status(200).send({
-        message: 'Book successfully removed.',
-        title: books
+        statusCode: 200,
+        message: 'Element updated'
+      });
+    });
+  },
+
+  createBook: (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).send({
+        statusCode: 422,
+        message: 'Syntax error',
+        errorDetails: errors.array()
       });
     }
 
-    return res.status(400).send({
-      message: 'Book not found.'
-    });
-  });
-};
+    const { body } = req;
 
-module.exports = {
-  getBook,
-  createBook,
-  deleteBook
+    Book.bookExists(body, (books) => {
+      if (books) {
+        return res.status(409).send({
+          statusCode: 409,
+          message: 'Conflict',
+          errorDetails: [
+            'Book exists in database'
+          ]
+        });
+      }
+
+      const newBook = new Book(body);
+      newBook.save();
+
+      return res.status(201).send({
+        guid: newBook.getGUID(),
+        statusCode: 201,
+        message: 'Element created'
+      });
+    });
+  },
+
+  deleteBook: (req, res) => {
+    const { guid } = req.params;
+
+    Book.removeByGUID(guid, (book) => {
+      if (!book) {
+        return res.status(404).send({
+          statusCode: 404,
+          message: 'Not found',
+          errorDetails: []
+        });
+      }
+
+      return res.status(200).send({
+        statusCode: 200,
+        message: 'Element deleted'
+      });
+    });
+  }
 };

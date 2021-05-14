@@ -3,7 +3,7 @@ const path = require('path');
 const uuid = require('uuid');
 
 // Path to books.json
-const p = path.join(path.dirname(require.main.filename), 'data', 'books.json');
+const db = path.join(path.dirname(require.main.filename), 'data', 'books.json');
 
 module.exports = class Book {
   constructor (data) {
@@ -15,7 +15,7 @@ module.exports = class Book {
   }
 
   save () {
-    fs.readFile(p, (err, data) => {
+    fs.readFile(db, (err, data) => {
       let books = [];
 
       if (err) {
@@ -25,7 +25,7 @@ module.exports = class Book {
 
       books = JSON.parse(data);
       books.push(this);
-      fs.writeFile(p, JSON.stringify(books), (err) => console.log(err));
+      fs.writeFile(db, JSON.stringify(books), (err) => console.log(err));
     });
   }
 
@@ -33,53 +33,12 @@ module.exports = class Book {
     return this.guid;
   }
 
-  static removeByGUID (guid, response) {
-    fs.readFile(p, (err, data) => {
-      let books = [];
-
-      if (err) {
-        console.log(err);
-        throw err;
-      }
-
-      books = JSON.parse(data);
-      const [bookToRemove] = books.filter(book => book.guid === guid);
-
-      if (bookToRemove) {
-        books = books.filter(book => book.guid !== guid);
-        fs.writeFile(p, JSON.stringify(books), (err) => console.log(err));
-
-        return response(bookToRemove.title);
-      }
-
-      return response();
-    });
-  }
-
-  // Get book by GUID
-  static getByGUID (guid, response) {
-    fs.readFile(p, (err, data) => {
-      let books = [];
-
-      if (err) {
-        console.log(err);
-        throw err;
-      }
-
-      books = JSON.parse(data);
-      books = books.filter(book => book.guid === guid);
-
-      if (books.length > 0) return response(books);
-      return response();
-    });
-  }
-
-  // Get books by Tags
-  static getByTags (query, response) {
+  // Get all books or filter by Title, Author, Year or Tags using query parameters
+  static getBooks (query, callback) {
     const { title, author, year } = query;
     let { tags } = query;
 
-    fs.readFile(p, (err, data) => {
+    fs.readFile(db, (err, data) => {
       let books = [];
 
       if (err) {
@@ -94,19 +53,38 @@ module.exports = class Book {
       if (year) books = books.filter(book => book.year === parseInt(year));
       if (tags) {
         tags.includes(',') ? tags = [...tags.split(',')] : tags = [tags];
-        books = books.filter(book => book.tag.some(genre => tags.includes(genre)));
+        books = books.filter(book => book.tag.some(bookTag => tags.includes(bookTag)));
       }
 
-      if (books.length > 0) return response(books);
-      return response();
+      books.unshift({
+        count: books.length,
+        filters: { title, author, year, tags }
+      });
+      if (books.length > 0) return callback(books);
+      return callback();
     });
   }
 
-  // Check if book exists in database
-  static checkBook (body, response) {
-    const { title, author, year } = body;
+  // Get book by GUID
+  static getByGUID (guid, callback) {
+    fs.readFile(db, (err, data) => {
+      let book = [];
 
-    fs.readFile(p, (err, data) => {
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+
+      book = JSON.parse(data);
+      book = book.filter(book => book.guid === guid);
+
+      if (book.length > 0) return callback(book);
+      return callback();
+    });
+  }
+
+  static updateBook (guid, body, callback) {
+    fs.readFile(db, (err, data) => {
       let books = [];
 
       if (err) {
@@ -115,10 +93,64 @@ module.exports = class Book {
       }
 
       books = JSON.parse(data);
-      books = books.filter(book => book.title === title && book.author === author && book.year === year);
 
-      if (books.length > 0) return response(true);
-      return response();
+      books.forEach(book => {
+        if (book.guid === guid) {
+          Object.keys(body).forEach(key => {
+            book[key] = body[key];
+          });
+        }
+      });
+
+      const book = books.filter(book => book.guid === guid);
+      if (book.length > 0) {
+        fs.writeFile(db, JSON.stringify(books), (err) => console.log(err));
+        return callback(book);
+      }
+
+      return callback();
+    });
+  }
+
+  static removeByGUID (guid, callback) {
+    fs.readFile(db, (err, data) => {
+      let books = [];
+
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+
+      books = JSON.parse(data);
+      const [bookToRemove] = books.filter(book => book.guid === guid);
+
+      if (bookToRemove) {
+        books = books.filter(book => book.guid !== guid);
+        fs.writeFile(db, JSON.stringify(books), (err) => console.log(err));
+
+        return callback(bookToRemove);
+      }
+
+      return callback();
+    });
+  }
+
+  static bookExists (body, callback) {
+    const { title, author, year } = body;
+
+    fs.readFile(db, (err, data) => {
+      let books = [];
+
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+
+      books = JSON.parse(data);
+      const book = books.filter(book => book.title === title && book.author === author && book.year === year);
+
+      if (book.length > 0) return callback(book);
+      return callback();
     });
   }
 };
